@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <memory.h>
 
 typedef struct nodo{
 
@@ -14,7 +15,7 @@ int main(void){
  while(a==0){
   printf ("File System ext2/ext3:#~$ ");
   fgets (cadena, 100, stdin);
-  char delimit[]=" ";
+  char delimit[]="";
   int len;
   int i;
 
@@ -22,15 +23,17 @@ char *token, *temp;
 
 int estado=0;
     len = strlen(cadena);
-    if((token = strtok(cadena, " "))!=NULL){
+    if((token = strtok(cadena, " :-+"))!=NULL){
+    printf("Dato: %s \n",token);
     printf("analizando comando: %s\n", token);
     estado=funciona(estado, token);
     }
-    while((token=strtok(NULL, " "))!=NULL) {
+    while((token=strtok(NULL, " :-+"))!=NULL) {
+        printf("Dato: %s \n",token);
         printf("analizando comando: %s\n", token);
         estado=funciona(estado, token);
     }
-    //accion(estado);
+
 
  }return 0;
 
@@ -54,67 +57,141 @@ int funciona(int val, char* token){
             return 0;
         }
     }else if(val==1){//acaba de pasar por mkdisk
-        if(strcmp(token,"-size")==0){
-            return 2;
+
+        if(strcmp(token,"size")==0){
+        printf("esperando valor...\n");
+        return 2;
         }else{
-            printf("\n Debe de ingresar el tamaño del disco:\n");
-            return 0;
-        }
+       printf("\n Debe de ingresar el tamaño del disco:\n");
+       return 0;
+    }
     }else if(val==2){//valor del tamaño
-        if(isdigit(token)){
+        int num=atoi(token);
+        if(num>0){
+                printf("valor guardado...\n");
             return 3;
-        }else{
-            printf("\n Debe ingresar un valor numerico para indicar el tamaño \n");
+        }
+        else{
+            printf("debe ingresar un dato numerico para indicar el espacio a utilizar \n");
         }
     }else if(val==3){//comando unit
-        if(strcmp(token,"+unit")==0){
-            return 4;
-        }else if(strcmp(token,"-path")==0){
+        if(strcmp(token,"unit")==0){
+        printf("esperando unidad en que se guardara[k/m]...\n");
+        return 4;
+        }else if(strcmp(token,"path")==0){
+            printf("esperando ruta del archivo...\n");
             return 5;
-        }else{
-            printf("\n se ha ingresado un parametro que no corresponde en este instante pruebe usando: \n");
-            printf("\n +unit  --> para indicar la medida del tamaño del disco \n");
-            printf("\n -path  --> para indicar la ruta del disco \n");
         }
+        else{
+       printf("\n Debe de ingresar la unidad o la ruta del disco:\n");
+       return 0;
+    }
+
     }else if(val==4){//unidad en que se guardara
-        if(token=="k" || token =="K" || token=="m" || token=="M"){
+        if((strcmp(token,"k")==0)||(strcmp(token,"K")==0)){
+        printf("se guardara en Kb...\n");
+        return 3;
+        }else if((strcmp(token,"m")==0)||(strcmp(token,"M")==0)){
+            printf("se guardara en Mb...\n");
             return 3;
-        }else{
-            printf("\n He sido diseñado para crear archivos con tamaño en Mb y Kb\n");
-            printf("\n intente nuevamente pero usando de unidad m o k \n");
         }
+        else{
+       printf("\n Debe de ingresar la unidad del disco:\n");
+       return 0;
+    }
     }else if(val==5){//ruta para crear
-        if(token[0]=="\""){
-            return 6;
-        }else{
-            printf("\n debe indicar en una cadena cual es la ruta de su archivo \n");
-        }
+        printf("ruta localizada");
+        return 6;
     }else if(val==6){//nombrre para crear
-        if(strcmp(token,"-name")==0){
+        if(strcmp(token,"name")==0){
             return 7;
         }else{
             printf("\n se necesita el nombre que recibira el archivo \n");
-            printf("\n ingrese el comando -name");
+            printf("\n ingrese el comando -name \n");
         }
     }else if(val==7){//ruta creada
-        if(token[0]=="\""){
-            return 0;
-        }else{
-            printf("\n debe indicar en una cadena cual es el nombre del archivo \n");
-        }
+        printf("nombre seleccionado");
+        return 0;
     }else if(val== 8){
-        if(strcmp(token,"-path")==0){
+        if(strcmp(token,"path")==0){
+            printf("esperando ruta del archivo a eliminar...");
             return 9;
         }else{
             printf("se requiere el parametro path(-path)");
         }
     }else if(val==9){
-        if(token[0]=="\""){
-            return 0;
+        printf("realmente desea eliminar el archivo que se encuentra en: %s ",token);
+        char opcion[50];
+        scanf("%s",opcion);
+        printf("su opcion %s \n",opcion);
+        if(strcmp(opcion,"s")==0){
+            printf("eliminando archivo...\n");
         }else{
-            printf("\n debe indicar en una cadena cual es la ruta que desea eliminar \n");
+            printf("El archivo no fue eliminado...\n");
         }
+        return 0;
     }else if(val==10){
+        printf("--------ADMINISTRADOR DE PARTICIONES---------");
+        if(strcmp(token,"size")==0){
+            printf("esperando tamaño del disco...\n");
+            return 11;
+        }else if(strcmp(token,"name")==0){
+            printf("nombre del disco...\n");
+            return 12;
+        }else if(strcmp(token,"unit")==0){
+            printf("seleccionando la unidad de medida en que se guardara..\n");
+            retun 13;
+        }else if(strcmp(token,"add")==0){
+            printf("esperando cantidad a añadir...\n");
+            return 14;
+        }else if(strcmp(token,"path")==0){
+            printf("esperando ruta del archivo...\n");
+            return 15;
+        }else if(strcmp(token,"type")==0){
+            printf("reconociendo tipo de particion...\n");
+            return 16;
+        }else if(strcmp(token,"fit")==0){
+            printf("forma de colocacion: \n");
+            return 17;
+        }else if(strcmp(token,"delete")==0){
+            printf("cantidad a eliminar en particion \n");
+            return 18;
+        }else{
+            printf("parametro no reconocido, porfavor intente de nuevo \n");
+            printf("el comando fdisk tiene los parametros: -size -name +unit +add -path +type +fit +delete \n");
+        }
+    }else if(val==11){
+        int num=atoi(token);
+        if(num>0){
+            printf("encontrado el tamaño de la particion... \n");
+            return 10;
+        }else{
+            printf("el tamaño de la particion debe ser mayor a cero \n");
+            return 10;
+        }
+    }else if(val==12){
+        if(strcmp(token,"m")==0 || strcmp(token,"M")==0){
+            printf("unidades en Mb... \n");
+            return 10;
+        }else if(strcmp(token,"k")==0||strcmp(token,"K")==0){
+            printf("Unidades en Kb... \n");
+            return 10;
+        }else if(strcmp(token,"b")==0 || strcmp(token,"B")==0){
+            printf("Unidades en bytes... \n");
+            return 10;
+        }
+    }else if(val==13){
+        int num=atoi(token);
+        if(num>0){
+        printf("aumentando tamaño.. \n");
+        }else{
+            printf("disminuyendo tamaño... \n");
+        }
+        return 10;
+    }else if(val==14){
+        printf("accediendo a la ruta del archivo... \n");
+        return 10;
+    }else if(val==15){
 
     }
 }
@@ -144,4 +221,8 @@ FILE* file = fopen(path,"ab");
             printf("Particion Creada");
             fclose(file);
         }
+}
+
+void crearCarpeta(char* path){
+//System("mkdir %s",path);
 }

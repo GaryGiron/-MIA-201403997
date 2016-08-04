@@ -1,6 +1,7 @@
 # depslib dependency file v1.0
-1470021890 source:/home/stephen/[MIA]2016/EXT3/FILE_SISTEM_EXT2/main.c
+1470292177 source:/home/stephen/[MIA]2016/EXT3/FILE_SISTEM_EXT2/main.c
 	<stdio.h>
 	<stdlib.h>
 	<string.h>
+	<memory.h>
 
