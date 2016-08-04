@@ -3,10 +3,35 @@
 #include <string.h>
 #include <memory.h>
 
-typedef struct nodo{
+typedef struct MBR{
 
-int tam;
+int mbr_tamano;
+char mbr_fecha_creacion[100];
+int mbr_disk_signature; //numero random que identifica cada disco
+struct particion *mbr_partition_1;
+struct particion *mbr_partition_2;
+struct particion *mbr_partition_3;
+struct particion *mbr_partition_4;
 }Disco;
+
+typedef struct EBR{
+char part_status;
+char part_fit;
+int part_start;
+int part_size;
+int part_next;
+char part_name[16];
+};
+
+typedef struct particion{
+char part_status;
+char part_type;
+char part_fit;
+int part_start;
+int part_size;
+char part_name[16];
+};
+
 
 int main(void){
  char cadena [100];
@@ -47,9 +72,9 @@ int funciona(int val, char* token){
         }else if(strcmp(token,"fdisk")==0){
             return 10;
         }else if(strcmp(token,"mount")==0){
-
+            return 19;
         }else if(strcmp(token,"umount")==0){
-
+            return 23;
         }
         else{
             printf("\n Error no se ha diseñado otro comando en esta aplicacion puede usar los siguientes:\n");
@@ -140,7 +165,7 @@ int funciona(int val, char* token){
             return 12;
         }else if(strcmp(token,"unit")==0){
             printf("seleccionando la unidad de medida en que se guardara..\n");
-            retun 13;
+            return 13;
         }else if(strcmp(token,"add")==0){
             printf("esperando cantidad a añadir...\n");
             return 14;
@@ -167,9 +192,12 @@ int funciona(int val, char* token){
             return 10;
         }else{
             printf("el tamaño de la particion debe ser mayor a cero \n");
-            return 10;
+            return 0;
         }
     }else if(val==12){
+        printf("seleccionando nombre del archivo... \n");
+        return 10;
+    }else if(val==13){
         if(strcmp(token,"m")==0 || strcmp(token,"M")==0){
             printf("unidades en Mb... \n");
             return 10;
@@ -179,8 +207,10 @@ int funciona(int val, char* token){
         }else if(strcmp(token,"b")==0 || strcmp(token,"B")==0){
             printf("Unidades en bytes... \n");
             return 10;
+        }else{
+            printf("no se reconoce ese tipo de unidad.. \n");
         }
-    }else if(val==13){
+    }else if(val==14){
         int num=atoi(token);
         if(num>0){
         printf("aumentando tamaño.. \n");
@@ -188,12 +218,93 @@ int funciona(int val, char* token){
             printf("disminuyendo tamaño... \n");
         }
         return 10;
-    }else if(val==14){
+    }else if(val==15){
         printf("accediendo a la ruta del archivo... \n");
         return 10;
-    }else if(val==15){
+    }else if(val==16){
+        //if(existe extendida){
+         //  printf("creando particion logica");
+        //}else
+        if(strcmp(token,"e")==0 || strcmp(token,"E")==0){//falta condicion  que aun no exista extendida y hallan 4
+            printf("ingresando particion extendida... \n");
+            return 10;
+        }else if(strcmp(token,"p")==0 || strcmp(token,"P")==0){
+            printf("ingresando particion primaria... \n");
+            return 10;
+        }else{
+            printf("no se reconoce el parametro enviado a la funcion \n");
+            return 0;
+        }
 
+    }else if(val==17){
+        if(strcmp(token,"BF")==0){
+            printf("determinado como mejor ajuste... \n");
+            return 10;
+        }else if(strcmp(token,"WF")==0){
+            printf("determinado como peor ajuste... \n");
+            return 10;
+        }else if(strcmp(token,"FF")==0){
+            printf("determinado como primer ajuste... \n");
+            return 10;
+        }else{
+            printf("no se reconoce el tipo de ajuste... \n");
+            return 0;
+        }
+    }else if(val==18){
+        if(strcmp(token,"full")==0||strcmp(token,"FULL")==0){
+            printf("se selecciono el eliminado completo");
+        }else if(strcmp(token,"fast")==0||strcmp(token,"FAST")==0){
+            printf("se selecciono el eliminado rapido");
+        }else{
+            printf("el tipo de parametro para la eliminacion es incorrecto... \n");
+            return 0;
+        }
+        return 10;
+    }else if(val==19){
+        if(strcmp(token,"path")==0){
+            printf("reconociendo ruta del archivo... \n");
+            return 20;
+        }else{
+            printf("debe ingresar la ruta (-path) \n");
+            return 0;
+        }
+    }else if(val==20){
+        printf("guardando la ruta del archivo...\n");
+        return 21;
+    }else if(val==21){
+        if(strcmp(token,"name")==0){
+            printf("reconociendo nombre del archivo... \n");
+            return 22;
+        }else{
+            printf("debe ingresar el nombre(-name) \n");
+            return 0;
+        }
+    }else if(val==22){
+        printf("guardando el nombre del archivo...\n");
+        return 0;
+    }else if(val==23){
+        char id[3];
+        id[0]=token[0];
+        id[1]=token[1];
+        if(strcmp(id,"id")==0){
+            printf("ingresando al %s ... \n",token);
+            return 24;
+        }else{
+            printf("debe de ingresar un id para llegar al disco... \n");
+        }
+    }else if(val==24){
+        char id[3];
+        id[0]=token[0];
+        id[1]=token[1];
+        if(strcmp(id,"VD")==0 || strcmp(id,"vd")==0){
+            printf("ingresando al %s ... \n",token);
+            return 23;
+        }else{
+            printf("debe de ingresar un VD del disco... \n");
+            return 0;
+        }
     }
+
 }
 
 
@@ -223,6 +334,32 @@ FILE* file = fopen(path,"ab");
         }
 }
 
+
+void guardar(Disco mbrs, char* ruta){
+FILE* file = fopen(ruta,"ab");
+        if(ruta ==NULL){
+            printf("No se pudo acceder al archivo");
+
+        }
+        else{
+            fwrite(&mbrs, sizeof(Disco),1,file);
+            printf("MBR Creado");
+            fclose(file);
+        }
+}
+
+void hora(char** hora){
+  time_t t;
+  struct tm *tm;
+  //char fechayhora[100];
+  t=time(NULL);
+  tm=localtime(&t);
+  strftime(hora, 100, "%H:%M:%S", tm);
+}
+
 void crearCarpeta(char* path){
 //System("mkdir %s",path);
+char* parms="mkdir ";
+strcat(parms,path);
+system(parms);
 }
