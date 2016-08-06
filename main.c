@@ -2,18 +2,28 @@
 #include <stdlib.h>
 #include <string.h>
 #include <memory.h>
+#include <time.h>
 
+//particiones
+typedef struct PART{
+char part_status;
+char part_type;
+char part_fit[3];
+int part_start;
+int part_size;
+char part_name[16];
+}PART;
+
+//master boot record
 typedef struct MBR{
 
 int mbr_tamano;
-char mbr_fecha_creacion[100];
+char* mbr_fecha_creacion;
 int mbr_disk_signature; //numero random que identifica cada disco
-struct particion *mbr_partition_1;
-struct particion *mbr_partition_2;
-struct particion *mbr_partition_3;
-struct particion *mbr_partition_4;
+PART mbr_partition[4];
 }Disco;
 
+//extended boot record
 typedef struct EBR{
 char part_status;
 char part_fit;
@@ -22,21 +32,125 @@ int part_size;
 int part_next;
 char part_name[16];
 };
+//mkdisk
+int tam_disco=0;
+char* unit_disco;
+char* ruta="/0";
+char* nombre="/0";
 
-typedef struct particion{
-char part_status;
-char part_type;
-char part_fit;
-int part_start;
-int part_size;
-char part_name[16];
-};
+char relleno[1024];
 
+Disco creaRegistro(int tam, char* date, int num){
+
+Disco mbr_init;
+
+mbr_init.mbr_tamano=tam;
+mbr_init.mbr_fecha_creacion=date;
+mbr_init.mbr_disk_signature=num;
+
+return mbr_init;
+
+}
+
+
+char* CrearArchivo(char* name, Disco mbr_init, int bits){
+    int len = strlen(ruta);
+        char path[len-2];
+        int x;
+        for(x=0;x<len-2;x++){
+            path[x]=ruta[x+1];
+        }
+
+        ruta=path;
+    printf("Esta es la ruta: %s", ruta);
+ if(access(ruta, 0 ) == 0 ){
+    char* path=ruta;//+ nombre
+    int longit = strlen(name);
+        char tempo[longit-2];
+        for(x=0;x<len-2;x++){
+            tempo[x]=name[x+1];
+        }
+
+        name=tempo;
+    strcat(path,"/");
+    strcat(path,name);
+    FILE *archivo=fopen(path,"w+b");
+    if(archivo){
+        fwrite(&mbr_init, sizeof(Disco),1,archivo);
+        int x;
+        for(x=0; x<1024;x++){
+            relleno[x]="/0";
+        }
+        int i;
+        for(i=0;i< (bits - sizeof(Disco)) ;i++){
+             fwrite(&relleno,sizeof(relleno),1,archivo);
+        }
+        fclose(archivo);
+        printf("El Disco ha sido creado exitosamente...\n");
+        return path;
+    }else{
+        printf("Error al crear el Disco...\n");
+        return "";
+    }
+ }else{
+    printf("La ruta ingresada no existe...");
+    return "";
+ }
+
+}
+
+
+
+
+char* horario(){
+
+        time_t tiempo = time(0);
+        struct tm *tlocal = localtime(&tiempo);
+        char output[128];
+        strftime(output,128,"%d/%m/%y %H:%M:%S",tlocal);
+        printf("%s\n",output);
+  return output;
+}
+
+int crearCarpeta(char* path){
+ if(access(path, 0 ) == 0 ){
+     printf("ya la carlitos");
+    return 1;
+}else{
+    printf("ya salio");
+    char* parms="mkdir ";
+    strcat(parms,path);
+
+printf(parms);
+system(parms);
+printf("Carpeta Creada exitosamente\n");
+return 0;
+}
+
+}
+
+int generarRandom()
+{
+     int i, j, num, dupl;
+
+     printf("RANDOM\n");
+     for (i = 0; i < 100; i++){
+         num = 1 + rand() % 100;
+         dupl = 0;
+         printf("%-4d", num);
+         //hacer algo para que no se duplique
+         if (dupl == 1)
+            i--;
+         else
+            return num;
+     }
+}
 
 int main(void){
  char cadena [100];
-
  int a=0;
+unit_disco="m";
+
  while(a==0){
   printf ("File System ext2/ext3:#~$ ");
   fgets (cadena, 100, stdin);
@@ -93,6 +207,7 @@ int funciona(int val, char* token){
     }else if(val==2){//valor del tamaño
         int num=atoi(token);
         if(num>0){
+                tam_disco=num;
                 printf("valor guardado...\n");
             return 3;
         }
@@ -115,9 +230,11 @@ int funciona(int val, char* token){
     }else if(val==4){//unidad en que se guardara
         if((strcmp(token,"k")==0)||(strcmp(token,"K")==0)){
         printf("se guardara en Kb...\n");
+        unit_disco="k";
         return 3;
         }else if((strcmp(token,"m")==0)||(strcmp(token,"M")==0)){
             printf("se guardara en Mb...\n");
+            unit_disco="m";
             return 3;
         }
         else{
@@ -125,6 +242,15 @@ int funciona(int val, char* token){
        return 0;
     }
     }else if(val==5){//ruta para crear
+        int len = strlen(token);
+        char path[len];
+        int x;
+        for(x=0;x<len-2;x++){
+            path[x]=token[x+1];
+        }
+
+        ruta=token;
+        printf("%s",ruta);
         printf("ruta localizada");
         return 6;
     }else if(val==6){//nombrre para crear
@@ -135,7 +261,17 @@ int funciona(int val, char* token){
             printf("\n ingrese el comando -name \n");
         }
     }else if(val==7){//ruta creada
+        nombre=token;
+        printf("%s",nombre);
         printf("nombre seleccionado");
+        int tam;
+        if(strcmp(unit_disco,"m")==0){
+            tam=tam_disco*1024;
+        }else{
+            tam=tam_disco;
+        }
+        CrearArchivo(nombre, creaRegistro(tam_disco,horario(),generarRandom()),tam);
+
         return 0;
     }else if(val== 8){
         if(strcmp(token,"path")==0){
@@ -308,58 +444,4 @@ int funciona(int val, char* token){
 }
 
 
-char* CrearArchivo(char* ruta, char* nombre){
-    char* path=ruta;//+ nombre
-    FILE *archivo=fopen(path,"w+b");
-    if(archivo){
-        printf("El Disco ha sido creado exitosamente...\n");
-        return path;
-    }else{
-        printf("Error al crear el Disco...\n");
-        return "";
-    }
 
-}
-
-void Guardar(Disco dev, char* path){
-FILE* file = fopen(path,"ab");
-        if(path ==NULL){
-            printf("No se pudo acceder al Disco");
-
-        }
-        else{
-            fwrite(&dev, sizeof(Disco),1,file);
-            printf("Particion Creada");
-            fclose(file);
-        }
-}
-
-
-void guardar(Disco mbrs, char* ruta){
-FILE* file = fopen(ruta,"ab");
-        if(ruta ==NULL){
-            printf("No se pudo acceder al archivo");
-
-        }
-        else{
-            fwrite(&mbrs, sizeof(Disco),1,file);
-            printf("MBR Creado");
-            fclose(file);
-        }
-}
-
-void hora(char** hora){
-  time_t t;
-  struct tm *tm;
-  //char fechayhora[100];
-  t=time(NULL);
-  tm=localtime(&t);
-  strftime(hora, 100, "%H:%M:%S", tm);
-}
-
-void crearCarpeta(char* path){
-//System("mkdir %s",path);
-char* parms="mkdir ";
-strcat(parms,path);
-system(parms);
-}
