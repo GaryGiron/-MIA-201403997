@@ -38,6 +38,17 @@ char* unit_disco;
 char* ruta="/0";
 char* nombre="/0";
 
+//fdisk
+int fdisk=0;
+int tam_part=0;
+char* unit_part;
+char* ruta_disco;
+char* type;
+char* fit;
+char* name_part;
+int add=0;
+int del=0;
+
 char relleno[1024];
 
 Disco creaRegistro(int tam, char* date, int num){
@@ -52,29 +63,60 @@ return mbr_init;
 
 }
 
-
 char* CrearArchivo(char* name, Disco mbr_init, int bits){
     int len = strlen(ruta);
         char path[len-2];
         int x;
-        for(x=0;x<len-2;x++){
-            path[x]=ruta[x+1];
-        }
+        int i,j;
+        i=0;
+        j=0;
 
+        while (ruta[i+1] != '\0')
+  {
+    if (isalpha(ruta[i])||isdigit(ruta[i]))
+    {
+      path[j] = ruta[i];
+	  j++;
+    }else{
+    if(ruta[i]=='/'){
+        path[j] = ruta[i];
+	  j++;
+    }
+    }
+    i++;
+  }
+
+  path[j]='\0';
         ruta=path;
     printf("Esta es la ruta: %s", ruta);
  if(access(ruta, 0 ) == 0 ){
-    char* path=ruta;//+ nombre
-    int longit = strlen(name);
-        char tempo[longit-2];
-        for(x=0;x<len-2;x++){
-            tempo[x]=name[x+1];
-        }
+    char* dir=ruta;//+ nombre
 
-        name=tempo;
-    strcat(path,"/");
-    strcat(path,name);
-    FILE *archivo=fopen(path,"w+b");
+    int len = strlen(name);
+        char path2[len-2];
+        i=0;
+        j=0;
+
+        while (name[i+1] != '\0')
+  {
+    if (isalpha(name[i])||isdigit(name[i]))
+    {
+      path2[j] = name[i];
+	  j++;
+    }else{
+        if(name[i]=='.'){
+           path2[j] = name[i];
+            j++;
+        }
+    }
+    i++;
+  }
+    path2[j]='\0';
+        name=path2;
+
+    strcat(dir,"/");
+    strcat(dir,name);
+    FILE *archivo=fopen(dir,"w+b");
     if(archivo){
         fwrite(&mbr_init, sizeof(Disco),1,archivo);
         int x;
@@ -87,7 +129,7 @@ char* CrearArchivo(char* name, Disco mbr_init, int bits){
         }
         fclose(archivo);
         printf("El Disco ha sido creado exitosamente...\n");
-        return path;
+        return dir;
     }else{
         printf("Error al crear el Disco...\n");
         return "";
@@ -99,8 +141,49 @@ char* CrearArchivo(char* name, Disco mbr_init, int bits){
 
 }
 
+void eliminarArchivo(char* route){
+    int len = strlen(route);
+        char path[len-2];
+        int i=0;
+        int j=0;
 
+        while (route[i+1] != '\0')
+  {
+    if (isalpha(route[i])||isdigit(route[i]))
+    {
+      path[j] = route[i];
+	  j++;
+    }else{
+        if(route[i]=='.'){
+           path[j] = route[i];
+            j++;
+        }else if(route[i]=='/'){
+            path[j] = route[i];
+            j++;
+        }
+    }
+    i++;
+  }
+    path[j]='\0';
+        route=path;
 
+            FILE *fichero;
+        fichero = fopen( route, "r" );
+        if(fichero!=NULL){
+        printf("realmente desea eliminar el archivo que se encuentra en: %s \n",route);
+        char opcion[50];
+        scanf("%s",opcion);
+        printf("su opcion %s \n",opcion);
+        if(strcmp(opcion,"s")==0){
+            printf("eliminando archivo...\n");
+            remove(route);
+        }else{
+            printf("El archivo no fue eliminado...\n");
+        }
+    }else{
+        printf("El Archivo no existe \n");
+    }
+}
 
 char* horario(){
 
@@ -129,8 +212,7 @@ return 0;
 
 }
 
-int generarRandom()
-{
+int generarRandom(){
      int i, j, num, dupl;
 
      printf("RANDOM\n");
@@ -171,6 +253,16 @@ int estado=0;
         printf("Dato: %s \n",token);
         printf("analizando comando: %s\n", token);
         estado=funciona(estado, token);
+    }
+    if(fdisk==1){
+        if(add==1){
+            add=0;
+
+        }else if(del==1){
+
+        }else{//crear particion
+
+        }
     }
 
 
@@ -281,15 +373,7 @@ int funciona(int val, char* token){
             printf("se requiere el parametro path(-path)");
         }
     }else if(val==9){
-        printf("realmente desea eliminar el archivo que se encuentra en: %s ",token);
-        char opcion[50];
-        scanf("%s",opcion);
-        printf("su opcion %s \n",opcion);
-        if(strcmp(opcion,"s")==0){
-            printf("eliminando archivo...\n");
-        }else{
-            printf("El archivo no fue eliminado...\n");
-        }
+        eliminarArchivo(token);
         return 0;
     }else if(val==10){
         printf("--------ADMINISTRADOR DE PARTICIONES---------");
