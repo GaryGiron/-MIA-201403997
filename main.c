@@ -43,7 +43,7 @@ int id;
 int fdisk=0;
 int tam_part=0;
 char* unit_part='k';
-char* ruta_disco;
+char* ruta_disco="-";
 char* type;
 int start;
 char* fit;
@@ -449,12 +449,77 @@ void addDisco(char* dir){
     }
 }
 
+//validacion para logicas
+void agregaDisco(){
+
+}
+
+char* recorreGraph(char* dir){
+char* graphviz;
+Disco datos;
+graphviz="digraph G {";
+buscarDato(&datos, dir);
+char* graph;
+strcat(graph, graphviz);
+if(datos.mbr_partition[0].part_status=='1'){
+
+}
+}
+
+void borraDisco(Disco mbr_init, char* dir, int parti){
+    if(strcmp(tipo_del,"full")==0){
+            mbr_init.mbr_partition[parti].part_fit="\0";
+            mbr_init.mbr_partition[parti].part_name="\0";
+            mbr_init.mbr_partition[parti].part_status='0';
+            mbr_init.mbr_partition[parti].part_size=0;
+            mbr_init.mbr_partition[parti].part_start=0;
+            mbr_init.mbr_partition[parti].part_type='\0';
+        }else{
+            mbr_init.mbr_partition[parti].part_fit="";
+            mbr_init.mbr_partition[parti].part_name="";
+            mbr_init.mbr_partition[parti].part_status='0';
+            mbr_init.mbr_partition[parti].part_size=0;
+            mbr_init.mbr_partition[parti].part_start=0;
+            mbr_init.mbr_partition[parti].part_type="";
+        }
+        FILE *archivo=fopen(dir,"w+b");
+            if(archivo){
+            fwrite(&mbr_init, sizeof(Disco),1,archivo);
+            int x;
+            int i;
+            for(i=0;i< (calcularTam(dir) - sizeof(Disco)) ;i++){
+                fwrite(&relleno,sizeof(relleno),1,archivo);
+            }
+            fclose(archivo);
+        printf("La particion fue eliminada...\n");
+        }
+}
+
+void delDisco(char* dir){
+    Disco mbr_init;
+    buscarDato(&mbr_init, dir);
+    if(strcmp(mbr_init.mbr_partition[0].part_name,name_part)==0){
+        borraDisco(mbr_init, dir, 0);
+    }else if(strcmp(mbr_init.mbr_partition[1].part_name,name_part)==0){
+        borraDisco(mbr_init, dir, 1);
+    }else if(strcmp(mbr_init.mbr_partition[2].part_name,name_part)==0){
+        borraDisco(mbr_init, dir, 2);
+    }else if(strcmp(mbr_init.mbr_partition[3].part_name,name_part)==0){
+        borraDisco(mbr_init, dir, 3);
+    }else{
+        printf("no existe ninguna particion con ese nombre en el disco seleccionado");
+    }
+}
+
 void adminDisco(char* dir){
 if(fdisk==1){
+    fdisk=0;
         if(add==1){
+                add=0;
                 addDisco(dir);
         }else if(del==1){
-
+                del=0;
+                delDisco(dir);
         }else{//crear particion
             crearParticion(dir);
         }
@@ -487,7 +552,9 @@ int estado=0;
         printf("analizando comando: %s\n", token);
         estado=funciona(estado, token);
     }
-
+    if(strcmp(ruta_disco,"-")==0){
+        adminDisco(ruta_disco);
+    }
 
  }return 0;
 
