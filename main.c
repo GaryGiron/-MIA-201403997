@@ -8,10 +8,10 @@
 typedef struct PART{
 char part_status;
 char part_type;
-char part_fit[3];
+char *part_fit;
 int part_start;
 int part_size;
-char part_name[16];
+char* part_name;
 }PART;
 
 //master boot record
@@ -37,17 +37,21 @@ int tam_disco=0;
 char* unit_disco;
 char* ruta="/0";
 char* nombre="/0";
+int id;
 
 //fdisk
 int fdisk=0;
 int tam_part=0;
-char* unit_part;
+char* unit_part='k';
 char* ruta_disco;
 char* type;
+int start;
 char* fit;
 char* name_part;
+char* tipo_del;
 int add=0;
 int del=0;
+int add_tam=0;
 
 char relleno[1024];
 
@@ -58,6 +62,10 @@ Disco mbr_init;
 mbr_init.mbr_tamano=tam;
 mbr_init.mbr_fecha_creacion=date;
 mbr_init.mbr_disk_signature=num;
+mbr_init.mbr_partition[0].part_status='0';
+mbr_init.mbr_partition[1].part_status='0';
+mbr_init.mbr_partition[2].part_status='0';
+mbr_init.mbr_partition[3].part_status='0';
 
 return mbr_init;
 
@@ -89,6 +97,8 @@ char* CrearArchivo(char* name, Disco mbr_init, int bits){
   path[j]='\0';
         ruta=path;
     printf("Esta es la ruta: %s", ruta);
+    int carp;
+   carp= crearCarpeta(ruta);
  if(access(ruta, 0 ) == 0 ){
     char* dir=ruta;//+ nombre
 
@@ -135,7 +145,7 @@ char* CrearArchivo(char* name, Disco mbr_init, int bits){
         return "";
     }
  }else{
-    printf("La ruta ingresada no existe...");
+    printf("No se pudo crear la carpeta...");
     return "";
  }
 
@@ -197,15 +207,17 @@ char* horario(){
 
 int crearCarpeta(char* path){
  if(access(path, 0 ) == 0 ){
-     printf("ya la carlitos");
+     printf("la ruta si existe");
     return 1;
 }else{
     printf("ya salio");
     char* parms="mkdir ";
-    strcat(parms,path);
+    char*dest;
+    strcat(dest,parms);
+    strcat(dest,path);
 
-printf(parms);
-system(parms);
+printf(dest);
+system(dest);
 printf("Carpeta Creada exitosamente\n");
 return 0;
 }
@@ -217,7 +229,7 @@ int generarRandom(){
 
      printf("RANDOM\n");
      for (i = 0; i < 100; i++){
-         num = 1 + rand() % 100;
+         num = 1 + rand();
          dupl = 0;
          printf("%-4d", num);
          //hacer algo para que no se duplique
@@ -226,6 +238,227 @@ int generarRandom(){
          else
             return num;
      }
+}
+
+void crearParticion(char* archivo){
+    Disco mbr_init;
+    buscarDato(&mbr_init, archivo);
+    if(mbr_init.mbr_partition[0].part_status=='0'){
+        mbr_init.mbr_partition[0].part_status='1';
+        mbr_init.mbr_partition[0].part_name=name_part;
+        mbr_init.mbr_partition[0].part_fit=fit;
+        mbr_init.mbr_partition[0].part_size=tam_part;
+        mbr_init.mbr_partition[0].part_start=start;
+        mbr_init.mbr_partition[0].part_type=type;
+        FILE *archivo=fopen(archivo,"w+b");
+    if(archivo){
+        fwrite(&mbr_init, sizeof(Disco),1,archivo);
+        int x;
+        int i;
+        for(i=0;i< (calcularTam(archivo) - sizeof(Disco)) ;i++){
+             fwrite(&relleno,sizeof(relleno),1,archivo);
+        }
+        fclose(archivo);
+        printf("La particion 1 ha sido creada exitosamente...\n");
+    }else{
+        printf("Error al crear el Disco...\n");
+
+    }
+    }else if(mbr_init.mbr_partition[1].part_status=='0'){
+        mbr_init.mbr_partition[1].part_status='1';
+        mbr_init.mbr_partition[1].part_name=name_part;
+        mbr_init.mbr_partition[1].part_fit=fit;
+        mbr_init.mbr_partition[1].part_size=tam_part;
+        mbr_init.mbr_partition[1].part_start=start;
+        mbr_init.mbr_partition[1].part_type=type;
+        FILE *archivo=fopen(archivo,"w+b");
+        if(archivo){
+        fwrite(&mbr_init, sizeof(Disco),1,archivo);
+        int x;
+        int i;
+        for(i=0;i< (calcularTam(archivo) - sizeof(Disco)) ;i++){
+             fwrite(&relleno,sizeof(relleno),1,archivo);
+        }
+        fclose(archivo);
+        printf("La particion 1 ha sido creada exitosamente...\n");
+        }else{
+        printf("Error al crear el Disco...\n");
+
+        }
+    }else if(mbr_init.mbr_partition[2].part_status=='0'){
+        mbr_init.mbr_partition[2].part_status='1';
+        mbr_init.mbr_partition[2].part_name=name_part;
+        mbr_init.mbr_partition[2].part_fit=fit;
+        mbr_init.mbr_partition[2].part_size=tam_part;
+        mbr_init.mbr_partition[2].part_start=start;
+        mbr_init.mbr_partition[2].part_type=type;
+        FILE *archivo=fopen(archivo,"w+b");
+        if(archivo){
+        fwrite(&mbr_init, sizeof(Disco),1,archivo);
+        int x;
+        int i;
+        for(i=0;i< (calcularTam(archivo) - sizeof(Disco)) ;i++){
+             fwrite(&relleno,sizeof(relleno),1,archivo);
+        }
+        fclose(archivo);
+        printf("La particion 1 ha sido creada exitosamente...\n");
+        }else{
+        printf("Error al crear el Disco...\n");
+
+        }
+    }else if(mbr_init.mbr_partition[3].part_status=='0'){
+        mbr_init.mbr_partition[3].part_status='1';
+        mbr_init.mbr_partition[3].part_name=name_part;
+        mbr_init.mbr_partition[3].part_fit=fit;
+        mbr_init.mbr_partition[3].part_size=tam_part;
+        mbr_init.mbr_partition[3].part_start=start;
+        mbr_init.mbr_partition[3].part_type=type;
+        FILE *archivo=fopen(archivo,"w+b");
+        if(archivo){
+        fwrite(&mbr_init, sizeof(Disco),1,archivo);
+        int x;
+        int i;
+        for(i=0;i< (calcularTam(archivo) - sizeof(Disco)) ;i++){
+             fwrite(&relleno,sizeof(relleno),1,archivo);
+        }
+        fclose(archivo);
+        printf("La particion 1 ha sido creada exitosamente...\n");
+        }else{
+        printf("Error al crear el Disco...\n");
+        }
+    }else{
+        printf("todas las particiones se encuentran ocupadas, si desea agregar debe eliminar una de las existentes \n");
+    }
+
+}
+
+void buscarDato(Disco* usuario, char* Archivo){
+    int codigo;
+    int bandera = 0;
+    FILE* file = fopen(Archivo,"rb");
+
+        if(Archivo == NULL){
+            printf("no se pudo acceder al disco");
+       }
+        else{
+
+            fread(usuario, sizeof(Disco),1,file);
+                printf("mbr_disk_signature: %-20s mbr_fecha_creacion: %-30d mbr_tamano: %-10d\n\n",(*usuario).mbr_disk_signature, (*usuario).mbr_fecha_creacion, (*usuario).mbr_tamano);
+                bandera = 1;
+
+        }
+}
+
+int calcularTam(char* path){
+    FILE *fich;
+
+fich=fopen(path,"r");
+
+  fseek(fich, 0L, SEEK_END);
+  int num=ftell(fich);
+  printf("el archivo ocupa %d bytes", num);
+  fclose(fich);
+  return num;
+}
+
+void addDisco(char* dir){
+    Disco mbr_init;
+    buscarDato(&mbr_init, dir);
+    if(strcmp(mbr_init.mbr_partition[0].part_name,name_part)==0){
+        if((calcularTam(dir)+add_tam>=10)){
+            mbr_init.mbr_partition[0].part_size= mbr_init.mbr_partition[0].part_size+add_tam;
+            FILE *archivo=fopen(dir,"w+b");
+            if(archivo){
+            fwrite(&mbr_init, sizeof(Disco),1,archivo);
+            int x;
+            int i;
+            for(i=0;i< (calcularTam(dir) - sizeof(Disco)) ;i++){
+                fwrite(&relleno,sizeof(relleno),1,archivo);
+            }
+            fclose(archivo);
+        printf("La particion 1 le ha sido adicionada la cantidad deseada...\n");
+    }else{
+        printf("Error al modificar el disco...\n");
+
+    }
+        }else{
+            printf("no se puede realizar el add puesto que se disminuiria el tamaño del disco a un tamaño menos a 10kb");
+        }
+    }else if(strcmp(mbr_init.mbr_partition[1].part_name,name_part)==0){
+        if((calcularTam(dir)+add_tam>=10)){
+            mbr_init.mbr_partition[1].part_size= mbr_init.mbr_partition[1].part_size+add_tam;
+            FILE *archivo=fopen(dir,"w+b");
+            if(archivo){
+            fwrite(&mbr_init, sizeof(Disco),1,archivo);
+            int x;
+            int i;
+            for(i=0;i< (calcularTam(dir) - sizeof(Disco)) ;i++){
+                fwrite(&relleno,sizeof(relleno),1,archivo);
+            }
+            fclose(archivo);
+        printf("La particion 2 le ha sido adicionada la cantidad deseada...\n");
+    }else{
+        printf("Error al modificar el disco...\n");
+
+    }
+        }else{
+            printf("no se puede realizar el add puesto que se disminuiria el tamaño del disco a un tamaño menos a 10kb");
+        }
+    }else if(strcmp(mbr_init.mbr_partition[2].part_name,name_part)==0){
+        if((calcularTam(dir)+add_tam>=10)){
+            mbr_init.mbr_partition[2].part_size= mbr_init.mbr_partition[2].part_size+add_tam;
+            FILE *archivo=fopen(dir,"w+b");
+            if(archivo){
+            fwrite(&mbr_init, sizeof(Disco),1,archivo);
+            int x;
+            int i;
+            for(i=0;i< (calcularTam(dir) - sizeof(Disco)) ;i++){
+                fwrite(&relleno,sizeof(relleno),1,archivo);
+            }
+            fclose(archivo);
+        printf("La particion 3 le ha sido adicionada la cantidad deseada...\n");
+    }else{
+        printf("Error al modificar el disco...\n");
+
+    }
+        }else{
+            printf("no se puede realizar el add puesto que se disminuiria el tamaño del disco a un tamaño menos a 10kb");
+        }
+    }else if(strcmp(mbr_init.mbr_partition[3].part_name,name_part)==0){
+        if((calcularTam(dir)+add_tam>=10)){
+            mbr_init.mbr_partition[3].part_size= mbr_init.mbr_partition[3].part_size+add_tam;
+            FILE *archivo=fopen(dir,"w+b");
+            if(archivo){
+            fwrite(&mbr_init, sizeof(Disco),1,archivo);
+            int x;
+            int i;
+            for(i=0;i< (calcularTam(dir) - sizeof(Disco)) ;i++){
+                fwrite(&relleno,sizeof(relleno),1,archivo);
+            }
+            fclose(archivo);
+        printf("La particion 4 le ha sido adicionada la cantidad deseada...\n");
+    }else{
+        printf("Error al modificar el disco...\n");
+
+    }
+        }else{
+            printf("no se puede realizar el add puesto que se disminuiria el tamaño del disco a un tamaño menos a 10kb");
+        }
+    }else{
+        printf("no existe ninguna particion con ese nombre en el disco seleccionado");
+    }
+}
+
+void adminDisco(char* dir){
+if(fdisk==1){
+        if(add==1){
+                addDisco(dir);
+        }else if(del==1){
+
+        }else{//crear particion
+            crearParticion(dir);
+        }
+    }
 }
 
 int main(void){
@@ -253,16 +486,6 @@ int estado=0;
         printf("Dato: %s \n",token);
         printf("analizando comando: %s\n", token);
         estado=funciona(estado, token);
-    }
-    if(fdisk==1){
-        if(add==1){
-            add=0;
-
-        }else if(del==1){
-
-        }else{//crear particion
-
-        }
     }
 
 
@@ -362,7 +585,8 @@ int funciona(int val, char* token){
         }else{
             tam=tam_disco;
         }
-        CrearArchivo(nombre, creaRegistro(tam_disco,horario(),generarRandom()),tam);
+        id=generarRandom();
+        char* dir=CrearArchivo(nombre, creaRegistro(tam_disco,horario(),id),tam);
 
         return 0;
     }else if(val== 8){
@@ -378,15 +602,16 @@ int funciona(int val, char* token){
     }else if(val==10){
         printf("--------ADMINISTRADOR DE PARTICIONES---------");
         if(strcmp(token,"size")==0){
-            printf("esperando tamaño del disco...\n");
+            printf("esperando tamaño de la particion...\n");
             return 11;
         }else if(strcmp(token,"name")==0){
-            printf("nombre del disco...\n");
+            printf("nombre de la particion...\n");
             return 12;
         }else if(strcmp(token,"unit")==0){
             printf("seleccionando la unidad de medida en que se guardara..\n");
             return 13;
         }else if(strcmp(token,"add")==0){
+            add=1;
             printf("esperando cantidad a añadir...\n");
             return 14;
         }else if(strcmp(token,"path")==0){
@@ -409,6 +634,7 @@ int funciona(int val, char* token){
         int num=atoi(token);
         if(num>0){
             printf("encontrado el tamaño de la particion... \n");
+            tam_part=num;
             return 10;
         }else{
             printf("el tamaño de la particion debe ser mayor a cero \n");
@@ -416,15 +642,35 @@ int funciona(int val, char* token){
         }
     }else if(val==12){
         printf("seleccionando nombre del archivo... \n");
+            int len = strlen(token);
+        char nombre_prt[len-2];
+        int i=0;
+        int j=0;
+
+        while (token[i+1] != '\0')
+    {
+    if (isalpha(token[i])||isdigit(token[i]))
+    {
+      nombre_prt[j] = token[i];
+	  j++;
+    }
+    i++;
+  }
+    nombre_prt[j]='\0';
+    name_part=nombre_prt;
+
         return 10;
     }else if(val==13){
         if(strcmp(token,"m")==0 || strcmp(token,"M")==0){
+            unit_part='m';
             printf("unidades en Mb... \n");
             return 10;
         }else if(strcmp(token,"k")==0||strcmp(token,"K")==0){
+            unit_part='k';
             printf("Unidades en Kb... \n");
             return 10;
         }else if(strcmp(token,"b")==0 || strcmp(token,"B")==0){
+            unit_part='b';
             printf("Unidades en bytes... \n");
             return 10;
         }else{
@@ -437,19 +683,46 @@ int funciona(int val, char* token){
         }else{
             printf("disminuyendo tamaño... \n");
         }
+        add_tam=num;
         return 10;
     }else if(val==15){
         printf("accediendo a la ruta del archivo... \n");
+        int len = strlen(token);
+        char nombre_prt[len-2];
+        int i=0;
+        int j=0;
+
+        while (token[i+1] != '\0')
+    {
+    if (isalpha(token[i])||isdigit(token[i]))
+    {
+      nombre_prt[j] = token[i];
+	  j++;
+    }else if(token[i]=='/'){
+        nombre_prt[j] = token[i];
+	  j++;
+    }else if(token[i]=='.'){
+         nombre_prt[j] = token[i];
+	  j++;
+    }
+    i++;
+  }
+    nombre_prt[j]='\0';
+    ruta_disco=nombre_prt;
+
         return 10;
     }else if(val==16){
-        //if(existe extendida){
-         //  printf("creando particion logica");
-        //}else
+        if(strcmp(token,"l")==0 || strcmp(token,"L")==0){
+           printf("creando particion logica");
+           type='l';
+        }else
         if(strcmp(token,"e")==0 || strcmp(token,"E")==0){//falta condicion  que aun no exista extendida y hallan 4
             printf("ingresando particion extendida... \n");
+            type='e';
             return 10;
         }else if(strcmp(token,"p")==0 || strcmp(token,"P")==0){
             printf("ingresando particion primaria... \n");
+            type='p';
             return 10;
         }else{
             printf("no se reconoce el parametro enviado a la funcion \n");
@@ -459,12 +732,15 @@ int funciona(int val, char* token){
     }else if(val==17){
         if(strcmp(token,"BF")==0){
             printf("determinado como mejor ajuste... \n");
+            fit="BF";
             return 10;
         }else if(strcmp(token,"WF")==0){
             printf("determinado como peor ajuste... \n");
+            fit="WF";
             return 10;
         }else if(strcmp(token,"FF")==0){
             printf("determinado como primer ajuste... \n");
+            fit="FF";
             return 10;
         }else{
             printf("no se reconoce el tipo de ajuste... \n");
@@ -472,9 +748,11 @@ int funciona(int val, char* token){
         }
     }else if(val==18){
         if(strcmp(token,"full")==0||strcmp(token,"FULL")==0){
+                tipo_del="full";
             printf("se selecciono el eliminado completo");
         }else if(strcmp(token,"fast")==0||strcmp(token,"FAST")==0){
             printf("se selecciono el eliminado rapido");
+            tipo_del="fast";
         }else{
             printf("el tipo de parametro para la eliminacion es incorrecto... \n");
             return 0;
