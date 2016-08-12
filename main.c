@@ -6,19 +6,18 @@
 
 //particiones
 typedef struct PART{
-char part_status;
+int part_status;
 char part_type;
-char *part_fit;
+char part_fit[3];
 int part_start;
 int part_size;
-char* part_name;
+char part_name[16];
 }PART;
 
 //master boot record
 typedef struct MBR{
-
 int mbr_tamano;
-char* mbr_fecha_creacion;
+char mbr_fecha_creacion[20];
 int mbr_disk_signature; //numero random que identifica cada disco
 PART mbr_partition[4];
 }Disco;
@@ -34,9 +33,9 @@ char part_name[16];
 };
 
 typedef struct mount{
-    char* dir_disco;
-    char* nombre_part;
-    char* id;
+    char dir_disco[50];
+    char nombre_part[20];
+    char id[20];
     struct mount *sig;
     struct mount *ant;
 }*h,*temp,*temp1,*temp2,*temp4;
@@ -53,7 +52,7 @@ int fdisk=0;
 int tam_part=0;
 char* unit_part='k';
 char* ruta_disco="-";
-char* type;
+char* type='p';
 int start;
 char* fit;
 char* name_part="-";
@@ -68,18 +67,37 @@ char relleno[1024];
 
 
 
-Disco creaRegistro(int tam, char* date, int num){
-
+Disco creaRegistro(int tam){
 Disco mbr_init;
+time_t tiempo = time(0);
+        struct tm *tlocal = localtime(&tiempo);
+        char output[128];
+        strftime(output,128,"%d/%m/%y %H:%M:%S",tlocal);
+        strcpy(mbr_init.mbr_fecha_creacion,output);
+
+
+int i, j, num, dupl;
+
+     printf("RANDOM\n");
+     for (i = 0; i < 100; i++){
+         num = 1 + rand();
+         dupl = 0;
+         printf("%-4d", num);
+         //hacer algo para que no se duplique
+         if (dupl == 1)
+            i--;
+         else
+            break;
+     }
 
 mbr_init.mbr_tamano=tam;
-mbr_init.mbr_fecha_creacion=date;
 mbr_init.mbr_disk_signature=num;
-mbr_init.mbr_partition[0].part_status='0';
-mbr_init.mbr_partition[1].part_status='0';
-mbr_init.mbr_partition[2].part_status='0';
-mbr_init.mbr_partition[3].part_status='0';
+mbr_init.mbr_partition[0].part_status=0;
+mbr_init.mbr_partition[1].part_status=0;
+mbr_init.mbr_partition[2].part_status=0;
+mbr_init.mbr_partition[3].part_status=0;
 
+printf("tamaño del struct: %d",sizeof(mbr_init));
 return mbr_init;
 
 }
@@ -139,7 +157,7 @@ char* CrearArchivo(char* name, Disco mbr_init, int bits){
 
     strcat(dir,"/");
     strcat(dir,name);
-    FILE *archivo=fopen(dir,"w+b");
+    FILE *archivo=fopen(dir,"wb+");
     if(archivo){
         fwrite(&mbr_init, sizeof(Disco),1,archivo);
         int x;
@@ -213,16 +231,6 @@ void eliminarArchivo(char* route){
     }
 }
 
-char* horario(){
-
-        time_t tiempo = time(0);
-        struct tm *tlocal = localtime(&tiempo);
-        char output[128];
-        strftime(output,128,"%d/%m/%y %H:%M:%S",tlocal);
-        printf("%s\n",output);
-  return output;
-}
-
 int crearCarpeta(char* path){
  if(access(path, 0 ) == 0 ){
      printf("la ruta si existe");
@@ -242,22 +250,6 @@ return 0;
 
 }
 
-int generarRandom(){
-     int i, j, num, dupl;
-
-     printf("RANDOM\n");
-     for (i = 0; i < 100; i++){
-         num = 1 + rand();
-         dupl = 0;
-         printf("%-4d", num);
-         //hacer algo para que no se duplique
-         if (dupl == 1)
-            i--;
-         else
-            return num;
-     }
-}
-
 void crearParticion(char* archivo){
     Disco mbr_init;
     int codigo;
@@ -270,21 +262,23 @@ void crearParticion(char* archivo){
         x=x+1;
     }
     leer_arch[x]='\0';
+    int tam=calcularTam(leer_arch) ;
     FILE* file;
-    file = fopen(leer_arch,"rb");
+    file = fopen(leer_arch,"rb+");
 
         if(file== NULL){
             printf("no se pudo acceder al disco");
         }
         else{
-            fread(&mbr_init, sizeof(Disco),1,file);
-              // printf("mbr_disk_signature: %-20s mbr_fecha_creacion: %-30d mbr_tamano: %-10d\n\n", (*usuario).mbr_disk_signature, (*usuario).mbr_fecha_creacion, (*usuario).mbr_tamano);
+            int x = fread(&mbr_init, sizeof(Disco),1,file);
+
+            printf("mbr_tamano: %d \n", mbr_init.mbr_tamano);
                 bandera = 1;
         }
-    if(mbr_init.mbr_partition[0].part_status=='0'){
-        mbr_init.mbr_partition[0].part_status='1';
-        mbr_init.mbr_partition[0].part_name=name_part;
-        mbr_init.mbr_partition[0].part_fit=fit;
+    if(mbr_init.mbr_partition[0].part_status==0){
+        mbr_init.mbr_partition[0].part_status=1;
+        strcpy(mbr_init.mbr_partition[0].part_name,name_part);
+        strcpy(mbr_init.mbr_partition[0].part_fit,fit);
         mbr_init.mbr_partition[0].part_size=tam_part;
         mbr_init.mbr_partition[0].part_start=start;
         mbr_init.mbr_partition[0].part_type=type;
@@ -294,7 +288,10 @@ void crearParticion(char* archivo){
         fwrite(&mbr_init, sizeof(Disco),1,texto);
         int x;
         int i;
-        for(i=0;i< (calcularTam(leer_arch) - sizeof(Disco)) ;i++){
+
+        int nuevotam=(tam - sizeof(mbr_init))/1024;
+
+        for(i=0;i<nuevotam  ;i++){
              fwrite(&relleno,sizeof(relleno),1,texto);
         }
         fclose(texto);
@@ -303,64 +300,67 @@ void crearParticion(char* archivo){
         printf("Error al crear el Disco...\n");
 
     }
-    }else if(mbr_init.mbr_partition[1].part_status=='0'){
-        mbr_init.mbr_partition[1].part_status='1';
-        mbr_init.mbr_partition[1].part_name=name_part;
-        mbr_init.mbr_partition[1].part_fit=fit;
+    }else if(mbr_init.mbr_partition[1].part_status==0){
+        mbr_init.mbr_partition[1].part_status=1;
+        strcpy(mbr_init.mbr_partition[1].part_name,name_part);
+        strcpy(mbr_init.mbr_partition[1].part_fit,fit);
         mbr_init.mbr_partition[1].part_size=tam_part;
         mbr_init.mbr_partition[1].part_start=start;
         mbr_init.mbr_partition[1].part_type=type;
-        FILE *archivo=fopen(archivo,"w+b");
-        if(archivo){
-        fwrite(&mbr_init, sizeof(Disco),1,archivo);
+        FILE *texto=fopen(archivo,"w+b");
+        if(texto){
+        fwrite(&mbr_init, sizeof(Disco),1,texto);
         int x;
         int i;
-        for(i=0;i< (calcularTam(archivo) - sizeof(Disco)) ;i++){
-             fwrite(&relleno,sizeof(relleno),1,archivo);
+         int nuevotam=(tam - sizeof(mbr_init))/1024;
+        for(i=0;i<nuevotam ;i++){
+             fwrite(&relleno,sizeof(relleno),1,texto);
         }
-        fclose(archivo);
+        fclose(texto);
         printf("La particion 1 ha sido creada exitosamente...\n");
         }else{
         printf("Error al crear el Disco...\n");
 
         }
-    }else if(mbr_init.mbr_partition[2].part_status=='0'){
-        mbr_init.mbr_partition[2].part_status='1';
-        mbr_init.mbr_partition[2].part_name=name_part;
-        mbr_init.mbr_partition[2].part_fit=fit;
+    }else if(mbr_init.mbr_partition[2].part_status==0){
+        mbr_init.mbr_partition[2].part_status=1;
+        strcpy(mbr_init.mbr_partition[2].part_name,name_part);
+        strcpy(mbr_init.mbr_partition[2].part_fit,fit);
         mbr_init.mbr_partition[2].part_size=tam_part;
         mbr_init.mbr_partition[2].part_start=start;
         mbr_init.mbr_partition[2].part_type=type;
-        FILE *archivo=fopen(archivo,"w+b");
-        if(archivo){
-        fwrite(&mbr_init, sizeof(Disco),1,archivo);
+        FILE *texto=fopen(archivo,"w+b");
+        if(texto){
+        fwrite(&mbr_init, sizeof(Disco),1,texto);
         int x;
         int i;
-        for(i=0;i< (calcularTam(archivo) - sizeof(Disco)) ;i++){
-             fwrite(&relleno,sizeof(relleno),1,archivo);
+        int nuevotam=(tam - sizeof(mbr_init))/1024;
+        for(i=0;i<nuevotam ;i++){
+             fwrite(&relleno,sizeof(relleno),1,texto);
         }
-        fclose(archivo);
+        fclose(texto);
         printf("La particion 1 ha sido creada exitosamente...\n");
         }else{
         printf("Error al crear el Disco...\n");
 
         }
-    }else if(mbr_init.mbr_partition[3].part_status=='0'){
-        mbr_init.mbr_partition[3].part_status='1';
-        mbr_init.mbr_partition[3].part_name=name_part;
-        mbr_init.mbr_partition[3].part_fit=fit;
+    }else if(mbr_init.mbr_partition[3].part_status==0){
+        mbr_init.mbr_partition[3].part_status=1;
+        strcpy(mbr_init.mbr_partition[3].part_name,name_part);
+        strcpy(mbr_init.mbr_partition[3].part_fit,fit);
         mbr_init.mbr_partition[3].part_size=tam_part;
         mbr_init.mbr_partition[3].part_start=start;
         mbr_init.mbr_partition[3].part_type=type;
-        FILE *archivo=fopen(archivo,"w+b");
-        if(archivo){
-        fwrite(&mbr_init, sizeof(Disco),1,archivo);
+        FILE *texto=fopen(archivo,"w+b");
+        if(texto){
+        fwrite(&mbr_init, sizeof(Disco),1,texto);
         int x;
         int i;
-        for(i=0;i< (calcularTam(archivo) - sizeof(Disco)) ;i++){
-             fwrite(&relleno,sizeof(relleno),1,archivo);
+        int nuevotam=(tam - sizeof(mbr_init))/1024;
+        for(i=0;i< nuevotam ;i++){
+             fwrite(&relleno,sizeof(relleno),1,texto);
         }
-        fclose(archivo);
+        fclose(texto);
         printf("La particion 1 ha sido creada exitosamente...\n");
         }else{
         printf("Error al crear el Disco...\n");
@@ -637,16 +637,16 @@ FILE *archivo=fopen("grafo.dot","w");
 
 void borraDisco(Disco mbr_init, char* dir, int parti){
     if(strcmp(tipo_del,"full")==0){
-            mbr_init.mbr_partition[parti].part_fit='\0';
-            mbr_init.mbr_partition[parti].part_name='\0';
-            mbr_init.mbr_partition[parti].part_status='0';
+            strcpy(mbr_init.mbr_partition[parti].part_fit,'\0');
+            strcpy(mbr_init.mbr_partition[parti].part_name,'\0');
+            strcpy(mbr_init.mbr_partition[parti].part_status,'0');
             mbr_init.mbr_partition[parti].part_size=0;
             mbr_init.mbr_partition[parti].part_start=0;
             mbr_init.mbr_partition[parti].part_type='\0';
         }else{
-            mbr_init.mbr_partition[parti].part_fit="";
-            mbr_init.mbr_partition[parti].part_name="";
-            mbr_init.mbr_partition[parti].part_status='0';
+            strcpy(mbr_init.mbr_partition[parti].part_fit,"");
+            strcpy(mbr_init.mbr_partition[parti].part_name,"");
+            strcpy(mbr_init.mbr_partition[parti].part_status,'0');
             mbr_init.mbr_partition[parti].part_size=0;
             mbr_init.mbr_partition[parti].part_start=0;
             mbr_init.mbr_partition[parti].part_type="";
@@ -902,7 +902,8 @@ int main(void){
  char cadena [100];
  int a=0;
 unit_disco="m";
-
+fit="WF";
+type=
  while(a==0){
   printf ("File System ext2/ext3:#~$ ");
   fgets (cadena, 100, stdin);
@@ -1007,9 +1008,8 @@ int funciona(int val, char* token){
         }else{
             tam=tam_disco;
         }
-        id=generarRandom();
         Disco inicial;
-        inicial=creaRegistro(tam_disco,horario(),id);
+        inicial=creaRegistro(tam_disco);
         char* dir=CrearArchivo(nombre,inicial ,tam);
 
         return 0;
